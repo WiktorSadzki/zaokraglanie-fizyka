@@ -1,10 +1,11 @@
 import math
 
-def get_decimal_place(number, sig_digits):
-    if number == 0:
+def get_decimal(number):
+    n = str(number)
+    if '.' not in n:
         return 0
-    first_sig_pos = math.floor(math.log10(abs(number)) + 1e-12)
-    return -(first_sig_pos - (sig_digits - 1))
+    else:
+        return len(n.split('.')[1])
 
 def round_significant_digits(number, significant_digits):
     if number == 0:
@@ -80,6 +81,8 @@ def analize_file(input_filename, output_filename):
     with open(input_filename, 'r') as f:
         for line in f:
             parts = line.split()
+            parts[0] = parts[0].replace(',', '.')
+            parts[1] = parts[1].replace(',', '.')
             if len(parts) < 2:
                 continue
 
@@ -89,11 +92,14 @@ def analize_file(input_filename, output_filename):
             u_final = round_uncertainty(u_raw)
 
             sig = significant_digits(m_raw, u_final)
-            place = get_decimal_place(u_final, sig)
             x_final = round_significant_places(m_raw, sig)
 
-            results.append(f"{x_final} {u_final}")
+            prec = max(get_decimal(u_final), get_decimal(x_final))
 
+            results.append(
+                f"{x_final:.{prec}f}".replace('.', ',') + ' ' +
+                f"{u_final:.{prec}f}".replace('.', ',')
+            )
     with open(output_filename, 'w') as f:
         for line in results:
             f.write(line + '\n')
